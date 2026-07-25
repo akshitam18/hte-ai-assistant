@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTE AI Assistant - Knowledge Retrieval System</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background: #f4f6f9;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        /* INCREASED TOP BAR HEIGHT & ADJUSTED SPACING */
+        .topbar {
+            padding: 12px 40px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex;
+            justify-content: space-between; /* Spreads VJTI left and HTE right */
+            align-items: center;
+            height: 90px; /* Increased height */
+            z-index: 11;
+        }
+        /* VJTI LOGO & TEXT (EXTREME LEFT - ADJUSTED SIZES) */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .logo img {
+            height: 60px; /* Scaled up logo */
+            width: auto;
+            object-fit: contain;
+        }
+        .text {
+            display: flex;
+            flex-direction: column;
+            color: #444444;
+            line-height: 1.25;
+        }
+        .logo h2 {
+            font-size: 16px; /* Scaled up heading */
+            font-weight: 700;
+            color: #000000;
+            letter-spacing: 0.2px;
+        }
+        .logo .sub-location {
+            font-size: 12px;
+            color: #666666;
+            font-weight: 500;
+        }
+        /* HTE BRANDING (EXTREME RIGHT - ADJUSTED SIZES) */
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-badge {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .brand-text h1 {
+            font-size: 1.15rem; /* Scaled up title */
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            color: #0f172a;
+        }
+        .brand-text .subtitle {
+            font-size: 0.78rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+        /* SECONDARY NAV BAR */
+        header {
+            background: linear-gradient(135deg, #0f172a 0%, #06327a 50%, #307ef4 100%);
+            color: white;
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            position: relative;
+            z-index: 10;
+            height: 60px;
+        }
+        /* CENTERED NAV TABS */
+        .nav-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 5px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .nav-tab {
+            color: #cbd5e1;
+            text-decoration: none;
+            padding: 6px 20px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        .nav-tab.active, .nav-tab:hover {
+            background: #0d6efd;
+            color: white;
+            box-shadow: 0 2px 10px rgba(13, 110, 253, 0.4);
+        }
+        .status-badge {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+            animation: blink 1.5s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        aside {
+            width: 320px;
+            background: white;
+            padding: 20px;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .doc-count {
+            background: #e2e8f0;
+            color: #475569;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .filter-box input {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            outline: none;
+        }
+        #pdfList {
+            list-style: none;
+            overflow-y: auto;
+            flex: 1;
+            margin-bottom: 15px;
+        }
+        .doc-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+        .doc-item:hover {
+            border-color: #93c5fd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .doc-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .doc-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .doc-meta {
+            font-size: 0.72rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .badge {
+            font-size: 0.65rem;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-weight: 700;
+            color: white;
+        }
+        .badge.gr { background-color: #2563eb; }
+        .doc-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .doc-action-btn:hover {
+            opacity: 1;
+        }
+        .upload-section {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 15px;
+            margin-top: auto;
+        }
+        .upload-section h3 {
+            font-size: 0.9rem;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+        .upload-section input[type="file"] {
+            width: 100%;
+            font-size: 0.85rem;
+            color: #334155;
+            cursor: pointer;
+        }
+        .upload-section input[type="file"]::file-selector-button {
+            background: #0d6efd;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-right: 10px;
+            transition: background 0.2s;
+        }
+        .upload-section input[type="file"]::file-selector-button:hover {
+            background: #0b5ed7;
+        }
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+        }
+        #chatWindow {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            max-width: 75%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            word-wrap: break-word;
+        }
+        .user {
+            background: #0d6efd;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+        .ai {
+            background: white;
+            color: #212529;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e9ecef;
+        }
+        .citation {
+            display: block;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #eaeaea;
+            font-size: 0.8rem;
+            color: #0d6efd;
+            font-weight: 600;
+        }
+        .inputArea {
+            display: flex;
+            padding: 15px 25px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+        @property --angle {
+            syntax: '<angle>';
+            initial-value: 0deg;
+            inherits: false;
+        }
+        .input-wrapper {
+            position: relative;
+            flex: 1;
+            border-radius: 8px;
+            padding: 2px;
+            background: transparent;
+            transition: background 0.3s ease;
+        }
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            outline: none;
+            background: white;
+            position: relative;
+            z-index: 2;
+        }
+        .input-wrapper:focus-within {
+            background: conic-gradient(from var(--angle), #0d6efd, #60a5fa, #38bdf8, transparent 40%, #0d6efd);
+            animation: rotateRing 2s linear infinite;
+        }
+        .input-wrapper:focus-within input {
+            border-color: transparent;
+        }
+        @keyframes rotateRing {
+            to {
+                --angle: 360deg;
+            }
+        }
+        .inputArea button {
+            margin-left: 12px;
+            padding: 12px 24px;
+            background: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .inputArea button:hover {
+            background: #0b5ed7;
+        }
+    </style>
+</head>
+<body>
+    <!-- EXPANDED TOP BAR WITH PROPORTIONAL LOGO & BRANDING SIZES -->
+    <div class="topbar">
+        <!-- VJTI LOGO & TEXT (LEFT) -->
+        <div class="logo">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbqjxPz93olFsvojgvfLcBrDNplscoMAfo5g&s" alt="VJTI Logo">
+            <div class="text">
+                <h2>VEERMATA JIJABAI TECHNOLOGICAL INSTITUTE (VJTI)</h2>
+                <span class="sub-location">Matunga, Mumbai-19</span>
+            </div>
+        </div>
+
+
+        <!-- HTE BRANDING (RIGHT) -->
+        <div class="brand-container">
+            <div class="logo-badge">🎓</div>
+            <div class="brand-text">
+                <h1>VJTI Nexus</h1>
+                <div class="subtitle">Higher & Technical Education Department</div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- SECONDARY NAV BAR WITH CENTERED OPTIONS -->
+    <header>
+        <div class="nav-center">
+            <nav class="nav-tabs">
+                <a href="#" class="nav-tab active">QA Portal</a>
+                <a href="#" class="nav-tab">RAG Engine</a>
+            </nav>
+        </div>
+
+
+        <div class="status-badge">
+            <div class="status-dot"></div>
+            RAG Engine Online
+        </div>
+    </header>
+
+
+    <div class="container">
+        <aside>
+            <div class="sidebar-header">
+                <h2>Documents</h2>
+                <span class="doc-count" id="docCount">0 Files</span>
+            </div>
+
+
+            <div class="filter-box">
+                <input type="text" id="searchPdf" placeholder="Search for documents..." />
+            </div>
+
+
+            <ul id="pdfList"></ul>
+
+
+            <div class="upload-section">
+                <h3>Upload PDF</h3>
+                <input type="file" id="pdfUpload" accept=".pdf" multiple />
+            </div>
+        </aside>
+
+
+        <main>
+            <div id="chatWindow">
+                <div class="message ai">
+                    <strong>HTE AI Assistant</strong><br>
+                    Hello! I am your HTE administrative assistant. Ask me any question regarding scholarships, admissions, or official regulations.
+                </div>
+            </div>
+
+
+            <div class="inputArea">
+                <div class="input-wrapper">
+                    <input
+                        type="text"
+                        id="question"
+                        placeholder="Ask a question..."
+                        autocomplete="off"
+                    >
+                </div>
+                <button id="sendBtn">Send</button>
+            </div>
+        </main>
+
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
