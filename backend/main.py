@@ -7,20 +7,20 @@ Main FastAPI application for the HTE AI Assistant.
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from config import HOST, PORT, MAX_FILE_SIZE
-from schemas import (
+from backend.config import HOST, PORT, MAX_FILE_SIZE
+from backend.schemas import (
     AskRequest,
     AskResponse,
     UploadResponse,
     HealthResponse,
 )
-from utils import (
+from backend.utils import (
     allowed_file,
     save_uploaded_file,
 )
 
 # Member 1 will provide this later
-# from rag import ask_ai
+# from backend.rag import ask_ai
 
 app = FastAPI(
     title="HTE AI Assistant",
@@ -34,7 +34,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],     # For prototype
+    allow_origins=["*"],     # Allow all origins for prototype
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -78,8 +78,15 @@ def upload_pdf(
     file: UploadFile = File(...)
 ):
 
-    if not allowed_file(file.filename):
+    # Ensure filename exists
+    if file.filename is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Filename is missing."
+        )
 
+    # Allow only PDF files
+    if not allowed_file(file.filename):
         raise HTTPException(
             status_code=400,
             detail="Only PDF files are allowed."
@@ -99,9 +106,10 @@ def upload_pdf(
             detail="File size exceeds the 20 MB limit."
         )
 
+    # Save uploaded PDF
     filename = save_uploaded_file(file)
 
-    # Member 1
+    # Member 1 will connect the ingestion pipeline here
     # ingest_document(filename)
 
     return {
@@ -121,7 +129,7 @@ def ask_question(
     request: AskRequest
 ):
 
-    # Replace this block with:
+    # Member 1 will replace this with:
     # result = ask_ai(request.question)
 
     result = {
@@ -142,7 +150,7 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "main:app",
+        "backend.main:app",
         host=HOST,
         port=PORT,
         reload=True
