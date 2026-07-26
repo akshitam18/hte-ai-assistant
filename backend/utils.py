@@ -51,6 +51,9 @@ def save_uploaded_file(file: UploadFile) -> str:
     Returns the saved filename.
     """
 
+    if file.filename is None:
+        raise ValueError("Filename is missing.")
+
     filename = generate_unique_filename(file.filename)
 
     file_path = os.path.join(

@@ -1,7 +1,7 @@
 import os
 from pdf_loader import load_pdf
 from chunking import chunk_text
-from chroma_db import store_chunks
+from backend.chroma_db import store_chunks
 
 DOCS_DIR = "../docs"
 
