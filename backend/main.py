@@ -7,7 +7,7 @@ Main FastAPI application for the HTE AI Assistant.
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from config import HOST, PORT
+from config import HOST, PORT, MAX_FILE_SIZE
 from schemas import (
     AskRequest,
     AskResponse,
@@ -85,6 +85,20 @@ def upload_pdf(
             detail="Only PDF files are allowed."
         )
 
+    
+    file.file.seek(0, 2)    # Move to the end of the file
+
+    
+    file_size = file.file.tell()     # Get file size in bytes    
+    file.file.seek(0)     # Move back to the beginning
+
+    if file_size > MAX_FILE_SIZE:
+
+        raise HTTPException(
+            status_code=400,
+            detail="File size exceeds the 20 MB limit."
+        )
+
     filename = save_uploaded_file(file)
 
     # Member 1
@@ -94,7 +108,6 @@ def upload_pdf(
         "message": "Upload successful",
         "filename": filename
     }
-
 
 # ==========================
 # ASK QUESTION
