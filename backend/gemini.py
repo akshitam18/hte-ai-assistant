@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = genai.Client(api_key=os.getenv("AQ.Ab8RN6KSbdS_RXDDAqaq9BWJUN9e8qq8NItUZjraI2Ie68rFwQ"))
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 def generate_answer(query: str, retrieved_context: str):
     """Generates grounded answers strictly using context."""

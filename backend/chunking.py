@@ -3,6 +3,7 @@ def chunk_text(pages_data: list[dict], chunk_size=500, chunk_overlap=50):
     Splits page text into smaller, overlapping chunks while preserving
     page number metadata.
     """
+    
     chunks = []
     
     for page in pages_data:

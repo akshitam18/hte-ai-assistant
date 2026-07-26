@@ -19,8 +19,8 @@ from backend.utils import (
     save_uploaded_file,
 )
 
-# Member 1 will provide this later
-# from backend.rag import ask_ai
+from backend.ingest import run_ingestion
+from backend.rag import run_rag_pipeline
 
 app = FastAPI(
     title="HTE AI Assistant",
@@ -28,21 +28,13 @@ app = FastAPI(
     description="AI-powered assistant for HTE documents"
 )
 
-# ==========================
-# CORS
-# ==========================
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],     # Allow all origins for prototype
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# ==========================
-# HOME
-# ==========================
 
 @app.get("/")
 def home():
@@ -50,10 +42,6 @@ def home():
         "message": "Welcome to HTE AI Assistant API 🚀"
     }
 
-
-# ==========================
-# HEALTH CHECK
-# ==========================
 
 @app.get(
     "/health",
@@ -65,11 +53,6 @@ def health_check():
         "status": "running"
     }
 
-
-# ==========================
-# UPLOAD PDF
-# ==========================
-
 @app.post(
     "/upload",
     response_model=UploadResponse
@@ -78,48 +61,41 @@ def upload_pdf(
     file: UploadFile = File(...)
 ):
 
-    # Ensure filename exists
     if file.filename is None:
         raise HTTPException(
             status_code=400,
             detail="Filename is missing."
         )
 
-    # Allow only PDF files
     if not allowed_file(file.filename):
         raise HTTPException(
             status_code=400,
             detail="Only PDF files are allowed."
         )
 
-    
-    file.file.seek(0, 2)    # Move to the end of the file
-
-    
-    file_size = file.file.tell()     # Get file size in bytes    
-    file.file.seek(0)     # Move back to the beginning
+    file.file.seek(0, 2)
+    file_size = file.file.tell()
+    file.file.seek(0)
 
     if file_size > MAX_FILE_SIZE:
-
         raise HTTPException(
             status_code=400,
             detail="File size exceeds the 20 MB limit."
         )
 
-    # Save uploaded PDF
     filename = save_uploaded_file(file)
 
-    # Member 1 will connect the ingestion pipeline here
-    # ingest_document(filename)
+    # ==========================
+    # Run ingestion pipeline
+    # ==========================
+
+    run_ingestion()
 
     return {
         "message": "Upload successful",
         "filename": filename
     }
 
-# ==========================
-# ASK QUESTION
-# ==========================
 
 @app.post(
     "/ask",
@@ -129,21 +105,12 @@ def ask_question(
     request: AskRequest
 ):
 
-    # Member 1 will replace this with:
-    # result = ask_ai(request.question)
-
-    result = {
-        "answer": "This is a placeholder response until the RAG pipeline is integrated.",
-        "source": "Scholarship.pdf",
-        "page": 1
-    }
+    result = run_rag_pipeline(
+        request.question
+    )
 
     return result
 
-
-# ==========================
-# RUN SERVER
-# ==========================
 
 if __name__ == "__main__":
 
