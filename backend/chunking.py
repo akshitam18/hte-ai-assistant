@@ -20,6 +20,6 @@ def chunk_text(pages_data: list[dict], chunk_size=500, chunk_overlap=50):
                 "page": page_num
             })
             
-            start += (chunk_size - chunk_overlap)
+            start += max(1,(chunk_size - chunk_overlap))
             
     return chunks

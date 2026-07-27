@@ -1,11 +1,11 @@
 import os
-from pdf_loader import load_pdf
-from chunking import chunk_text
+from backend.pdf_loader import load_pdf
+from backend.chunking import chunk_text
 from backend.chroma_db import store_chunks
 
-DOCS_DIR = "../docs"
+from backend.config import DOCS_DIR
 
-def run_ingestion():
+def ingest_file():
     if not os.path.exists(DOCS_DIR):
         print(f"Directory {DOCS_DIR} not found. Create it and add PDFs.")
         return
@@ -22,4 +22,4 @@ def run_ingestion():
             print(f"Successfully processed {filename} into ChromaDB!")
 
 if __name__ == "__main__":
-    run_ingestion()
+    ingest_file()

@@ -1,5 +1,5 @@
-from chroma_db import query_chroma
-from gemini import generate_answer
+from backend.chroma_db import query_chroma
+from backend.gemini import generate_answer
 
 def run_rag_pipeline(query: str):
     retrieval_results = query_chroma(query, n_results=3)

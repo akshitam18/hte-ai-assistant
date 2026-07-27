@@ -13,4 +13,4 @@ sentence-transformers
 
 pydantic
 
-pypdf
+python-multipart

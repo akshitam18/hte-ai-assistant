@@ -42,6 +42,13 @@ async function checkBackendHealth() {
 
 document.addEventListener("DOMContentLoaded", checkBackendHealth);
 
+
+function escapeHTML(str) {
+    return String(str).replace(/[&<>'"]/g,
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+}
+
 // Send Question to FastAPI Backend (/ask)
 async function sendMessage() {
     const query = questionInput.value.trim();
@@ -209,10 +216,4 @@ if (pdfUpload) {
         updateDocCount();
         pdfUpload.value = '';
     });
-}
-
-function escapeHTML(str) {
-    return String(str).replace(/[&<>'"]/g,
-        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-    );
 }

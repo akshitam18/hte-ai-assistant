@@ -8,7 +8,7 @@ import os
 from datetime import datetime
 from fastapi import UploadFile
 
-from config import DOCUMENTS_FOLDER, ALLOWED_EXTENSIONS
+from backend.config import DOCS_DIR, ALLOWED_EXTENSIONS
 
 
 # ==========================
@@ -57,7 +57,7 @@ def save_uploaded_file(file: UploadFile) -> str:
     filename = generate_unique_filename(file.filename)
 
     file_path = os.path.join(
-        DOCUMENTS_FOLDER,
+        DOCS_DIR,
         filename
     )
 

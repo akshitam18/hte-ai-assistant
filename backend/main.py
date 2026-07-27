@@ -19,7 +19,7 @@ from backend.utils import (
     save_uploaded_file,
 )
 
-from backend.ingest import run_ingestion
+from backend.ingest import ingest_file
 from backend.rag import run_rag_pipeline
 
 app = FastAPI(
@@ -31,7 +31,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -89,7 +89,7 @@ def upload_pdf(
     # Run ingestion pipeline
     # ==========================
 
-    run_ingestion()
+    ingest_file()
 
     return {
         "message": "Upload successful",

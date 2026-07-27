@@ -11,10 +11,10 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Load environment variables from .env file
 
-DOCUMENTS_FOLDER = "documents"   # Folder where uploaded PDFs are stored
+DOCS_DIR = "docs"   # Folder where uploaded PDFs are stored
 CHROMA_DB_FOLDER = "chroma_db"   # Folder where ChromaDB stores embeddings
 
-os.makedirs(DOCUMENTS_FOLDER, exist_ok=True)   #creating folders if they do not exist
+os.makedirs(DOCS_DIR, exist_ok=True)   #creating folders if they do not exist
 os.makedirs(CHROMA_DB_FOLDER, exist_ok=True)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")    # Read the Gemini API key from the .env file
