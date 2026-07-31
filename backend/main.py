@@ -1,8 +1,8 @@
 """
 main.py
-
 Main FastAPI application for the HTE AI Assistant.
 """
+#This is the main file
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
