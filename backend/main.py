@@ -1,12 +1,13 @@
 """
 main.py
-
 Main FastAPI application for the HTE AI Assistant.
 Handles API routing, file downloads, feedback logging, and error boundaries.
 """
 import os
 import json
 from datetime import datetime
+#This is the main file
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
