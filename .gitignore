@@ -21,17 +21,21 @@ backend/.env
 # ==========================
 # Chroma Database
 # ==========================
+chroma_db/
 backend/chroma_db/
 
 # ==========================
-# Uploaded PDFs
+# Uploaded PDFs & Documents
 # ==========================
+docs/
+documents/
 backend/documents/
 
 # ==========================
-# VS Code
+# VS Code & IDEs
 # ==========================
 .vscode/
+.idea/
 
 # ==========================
 # macOS
@@ -39,11 +43,12 @@ backend/documents/
 .DS_Store
 
 # ==========================
-# Logs
+# Logs & System Tracking
 # ==========================
 *.log
+user_feedback.json
 
 # ==========================
-# Node
+# Node / Frontend
 # ==========================
 frontend/node_modules/
