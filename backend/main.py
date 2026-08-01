@@ -26,7 +26,7 @@ from backend.utils import (
 )
 
 from backend.ingest import ingest_file
-from backend.rag import run_rag_pipeline, generate_document_summary
+from backend.rag import run_rag_pipeline #generate_document_summary
 
 app = FastAPI(
     title="HTE AI Assistant",
@@ -84,7 +84,7 @@ def upload_pdf(file: UploadFile = File(...)):
 
     filename = save_uploaded_file(file)
 
-    ingest_file(target_filename=filename)
+    ingest_file()#target_filename=filename
 
     return {
         "message": "Upload successful",
@@ -139,7 +139,7 @@ def record_feedback(entry: FeedbackRequest):
 @app.get("/summarize/{filename}", response_model=SummaryResponse)
 def summarize_document(filename: str):
     
-    summary_text = generate_document_summary(filename)
+    summary_text = #generate_document_summary(filename)
     return {
         "filename": filename,
         "summary": summary_text
