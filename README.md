@@ -66,6 +66,7 @@ HTE-AI-Assistant/
 │   ├── chroma_db.py
 │   ├── gemini.py
 │   ├── rag.py
+│   ├── search_hybrid.py
 │   ├── ingest.py
 │   ├── main.py
 │   ├── requirements.txt
