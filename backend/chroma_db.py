@@ -2,12 +2,14 @@
 backend/chroma_db.py
 ChromaDB database configuration, chunk storage, and low-level querying.
 """
+from typing import Any
+
 import chromadb
 
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
 collection = chroma_client.get_or_create_collection(name="hte_docs")
 
-def store_chunks(chunks: list[dict], source_filename: str, extra_metadata: dict = None):
+def store_chunks(chunks: list[dict], source_filename: str, extra_metadata: dict | None = None):
     """
     Stores text chunks, vector embeddings, and rich metadata into ChromaDB.
     Supports extra structural metadata extracted by Developer 3.
@@ -26,7 +28,7 @@ def store_chunks(chunks: list[dict], source_filename: str, extra_metadata: dict 
             "source": source_filename, 
             "page": c["page"]
         }
-        if extra_metadata:
+        if extra_metadata is not None:
             meta.update(extra_metadata)
         metadatas.append(meta)
     
@@ -37,7 +39,7 @@ def store_chunks(chunks: list[dict], source_filename: str, extra_metadata: dict 
         metadatas=metadatas
     )
 
-def query_chroma(query_text: str, n_results=3) -> dict:
+def query_chroma(query_text: str, n_results=3) -> Any:
     """Performs semantic search to retrieve matching document chunks with distances."""
     from backend.embeddings import get_embeddings
     

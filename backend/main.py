@@ -84,7 +84,7 @@ def upload_pdf(file: UploadFile = File(...)):
 
     filename = save_uploaded_file(file)
 
-    ingest_file()  # target_filename=filename
+    ingest_file() 
 
     return {
         "message": "Upload successful",

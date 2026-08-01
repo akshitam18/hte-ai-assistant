@@ -28,7 +28,8 @@ Answer:
             model='gemini-2.5-flash',
             contents=prompt
         )
-        return response.text.strip()
+        response_text = response.text or ""
+        return response_text.strip()
     except Exception as e:
         return f"Error: {e}"
 
@@ -53,6 +54,7 @@ Summary:
             model='gemini-2.5-flash',
             contents=prompt
         )
-        return response.text.strip()
+        response_text = response.text or ""
+        return response_text.strip()
     except Exception as e:
         return f"Error: {e}"

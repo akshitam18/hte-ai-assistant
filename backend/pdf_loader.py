@@ -8,8 +8,13 @@ def load_pdf(pdf_path: str):
     doc = fitz.open(pdf_path)
     pages_data = []
     
-    for page_num, page in enumerate(doc, start=1):
-        text = page.get_text("text").strip()
+    for page_index in range(len(doc)):
+        page = doc.load_page(page_index)
+        page_num = page_index + 1
+        raw_text = page.get_text("text")
+        if not isinstance(raw_text, str):
+            continue
+        text = raw_text.strip()
         if text:
             pages_data.append({
                 "page": page_num,
