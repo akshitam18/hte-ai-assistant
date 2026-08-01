@@ -6,7 +6,6 @@ Handles API routing, file downloads, feedback logging, and error boundaries.
 import os
 import json
 from datetime import datetime
-#This is the main file
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
@@ -27,7 +26,7 @@ from backend.utils import (
 )
 
 from backend.ingest import ingest_file
-from backend.rag import run_rag_pipeline #generate_document_summary
+from backend.rag import run_rag_pipeline, generate_document_summary
 
 app = FastAPI(
     title="HTE AI Assistant",
@@ -52,13 +51,13 @@ def home():
     }
 
 
-@app.get("/health",response_model=HealthResponse)
+@app.get("/health", response_model=HealthResponse)
 def health_check():
     return {
         "status": "running"
     }
 
-@app.post("/upload",response_model=UploadResponse)
+@app.post("/upload", response_model=UploadResponse)
 def upload_pdf(file: UploadFile = File(...)):
 
     if file.filename is None:
@@ -85,7 +84,7 @@ def upload_pdf(file: UploadFile = File(...)):
 
     filename = save_uploaded_file(file)
 
-    ingest_file()#target_filename=filename
+    ingest_file()  # target_filename=filename
 
     return {
         "message": "Upload successful",
@@ -93,7 +92,7 @@ def upload_pdf(file: UploadFile = File(...)):
     }
 
 
-@app.post("/ask",response_model=AskResponse)
+@app.post("/ask", response_model=AskResponse)
 def ask_question(request: AskRequest):
     result = run_rag_pipeline(request.question)
     return result
@@ -140,7 +139,7 @@ def record_feedback(entry: FeedbackRequest):
 @app.get("/summarize/{filename}", response_model=SummaryResponse)
 def summarize_document(filename: str):
     
-    summary_text = #generate_document_summary(filename)
+    summary_text = generate_document_summary(filename)
     return {
         "filename": filename,
         "summary": summary_text

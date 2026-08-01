@@ -8,6 +8,7 @@ const chatWindow = document.getElementById('chatWindow');
 const pdfUpload = document.getElementById('pdfUpload');
 const pdfList = document.getElementById('pdfList');
 const docCount = document.getElementById('docCount');
+const searchPdf = document.getElementById('searchPdf');
 
 // Update document counter in sidebar
 function updateDocCount() {
@@ -41,7 +42,6 @@ async function checkBackendHealth() {
 }
 
 document.addEventListener("DOMContentLoaded", checkBackendHealth);
-
 
 function escapeHTML(str) {
     return String(str).replace(/[&<>'"]/g,
@@ -111,7 +111,9 @@ async function sendMessage() {
 
     } catch (error) {
         console.error("Ask query error:", error);
-        chatWindow.removeChild(loadingDiv);
+        if (chatWindow.contains(loadingDiv)) {
+            chatWindow.removeChild(loadingDiv);
+        }
 
         const errorDiv = document.createElement('div');
         errorDiv.className = 'message ai';
@@ -128,12 +130,70 @@ async function sendMessage() {
     }
 }
 
-sendBtn.addEventListener('click', sendMessage);
-questionInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-});
+if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+if (questionInput) {
+    questionInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+}
 
-// Upload PDF Files to Backend (/upload) - Handled strictly within the sidebar
+// Request Document Summary from Backend (/summarize/{filename})
+async function summarizeDocument(filename) {
+    // Append User Action Message to Chat
+    const userDiv = document.createElement('div');
+    userDiv.className = 'message user';
+    userDiv.innerHTML = `<strong>You:</strong><br>Summarize <strong>${escapeHTML(filename)}</strong>`;
+    chatWindow.appendChild(userDiv);
+
+    // Show Loading Placeholder
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'message ai';
+    loadingDiv.innerHTML = `<em>📄 Generating summary for ${escapeHTML(filename)}...</em>`;
+    chatWindow.appendChild(loadingDiv);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/summarize/${encodeURIComponent(filename)}`);
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.detail || "Failed to generate summary.");
+        }
+
+        const data = await response.json();
+        chatWindow.removeChild(loadingDiv);
+
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'message ai';
+        
+        const formattedSummary = escapeHTML(data.summary || data.answer || "No summary returned.").replace(/\n/g, '<br>');
+
+        aiDiv.innerHTML = `
+            <strong>HTE AI Assistant - Executive Summary</strong><br>
+            <span style="font-size: 0.82rem; color: #64748b; margin-bottom: 8px; display: inline-block;">Document: <strong>${escapeHTML(filename)}</strong></span><br>
+            ${formattedSummary}
+        `;
+        chatWindow.appendChild(aiDiv);
+
+    } catch (error) {
+        console.error("Summarize error:", error);
+        if (chatWindow.contains(loadingDiv)) {
+            chatWindow.removeChild(loadingDiv);
+        }
+
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'message ai';
+        errorDiv.innerHTML = `
+            <strong>HTE AI Assistant</strong><br>
+            <span style="color: #ef4444;">⚠️ Error: ${escapeHTML(error.message || "Could not generate summary.")}</span>
+        `;
+        chatWindow.appendChild(errorDiv);
+    } finally {
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+}
+
+// Upload PDF Files to Backend (/upload)
 if (pdfUpload) {
     pdfUpload.addEventListener('change', async (e) => {
         const files = e.target.files;
@@ -171,23 +231,21 @@ if (pdfUpload) {
                     }
 
                     const data = await response.json();
+                    const uploadedFileName = data.filename || file.name;
 
                     // Update sidebar item upon successful upload
                     tempLi.style.opacity = '1';
                     tempLi.innerHTML = `
-                        <input type="checkbox" checked title="Include in search context" />
                         <div class="doc-info">
-                            <span class="doc-name">📄 ${escapeHTML(data.filename)}</span>
+                            <span class="doc-name" title="${escapeHTML(uploadedFileName)}">📄 ${escapeHTML(uploadedFileName)}</span>
                             <span class="doc-meta">${(file.size / 1024).toFixed(1)} KB</span>
                         </div>
-                        <button class="doc-action-btn delete" title="Delete">🗑️</button>
+                        <button class="btn-summarize" title="Summarize document">📄 Summarize</button>
                     `;
 
-                    const deleteBtn = tempLi.querySelector('.delete');
-                    deleteBtn.addEventListener('click', () => {
-                        tempLi.remove();
-                        updateDocCount();
-                    });
+                    // Attach summarize handler
+                    const summarizeBtn = tempLi.querySelector('.btn-summarize');
+                    summarizeBtn.addEventListener('click', () => summarizeDocument(uploadedFileName));
 
                 } catch (error) {
                     console.error("Upload error:", error);
@@ -201,19 +259,38 @@ if (pdfUpload) {
                             <span class="doc-name" style="color: #ef4444;">❌ ${escapeHTML(file.name)}</span>
                             <span class="doc-meta" style="color: #ef4444;">${escapeHTML(error.message)}</span>
                         </div>
-                        <button class="doc-action-btn delete" title="Remove">🗑️</button>
+                        <button class="doc-action-btn delete" title="Remove" style="background:none; border:none; cursor:pointer;">🗑️</button>
                     `;
 
                     const deleteBtn = tempLi.querySelector('.delete');
-                    deleteBtn.addEventListener('click', () => {
-                        tempLi.remove();
-                        updateDocCount();
-                    });
+                    if (deleteBtn) {
+                        deleteBtn.addEventListener('click', () => {
+                            tempLi.remove();
+                            updateDocCount();
+                        });
+                    }
                 }
             }
         }
 
         updateDocCount();
         pdfUpload.value = '';
+    });
+}
+
+// Live Document Filtering in Sidebar
+if (searchPdf) {
+    searchPdf.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const items = pdfList.querySelectorAll('.doc-item');
+
+        items.forEach(item => {
+            const name = item.querySelector('.doc-name')?.textContent.toLowerCase() || '';
+            if (name.includes(searchTerm)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
     });
 }
