@@ -7,6 +7,9 @@ load_dotenv()
 # Initialize Gemini Client
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
+# Standard model name for the new Google GenAI SDK
+MODEL_NAME = 'gemini-3.5-flash-lite'
+
 def generate_answer(query: str, retrieved_context: str) -> str:
     """Generates an answer in English, Marathi, or Hindi based on the question."""
     prompt = f"""
@@ -25,7 +28,7 @@ Answer:
 """
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model=MODEL_NAME,
             contents=prompt
         )
         response_text = response.text or ""
@@ -51,7 +54,7 @@ Summary:
 """
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model=MODEL_NAME,
             contents=prompt
         )
         response_text = response.text or ""

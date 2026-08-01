@@ -95,6 +95,14 @@ def upload_pdf(file: UploadFile = File(...)):
 @app.post("/ask", response_model=AskResponse)
 def ask_question(request: AskRequest):
     result = run_rag_pipeline(request.question)
+    
+    if isinstance(result, dict):
+        # Convert float to str, or set default string if missing
+        if "relevance_score" in result:
+            result["relevance_score"] = str(result["relevance_score"])
+        else:
+            result["relevance_score"] = "0.0"
+            
     return result
 
 @app.get("/docs/{filename}")
