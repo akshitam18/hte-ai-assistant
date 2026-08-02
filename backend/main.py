@@ -105,7 +105,7 @@ async def upload_pdf(file: UploadFile = File(...)):
         )
 
     # Save file asynchronously
-    filename = await save_uploaded_file(file)
+    filename =  save_uploaded_file(file)
 
     # Trigger chunking and ChromaDB vector insertion
     ingest_file()
