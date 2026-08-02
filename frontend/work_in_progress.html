@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work in Progress - VJTI Nexus</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        body { min-height: 100vh; background: #f4f6f9; display: flex; flex-direction: column; }
+        .topbar { padding: 12px 40px; background: white; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); display: flex; justify-content: space-between; align-items: center; height: 90px; }
+        .logo { display: flex; align-items: center; gap: 14px; }
+        .logo img { height: 60px; }
+        .brand-container { display: flex; align-items: center; gap: 12px; }
+        .logo-badge { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 10px; font-size: 1.3rem; }
+        .brand-text h1 { font-size: 1.15rem; font-weight: 700; color: #0f172a; }
+        .brand-text .subtitle { font-size: 0.78rem; color: #64748b; }
+        header { background: linear-gradient(135deg, #0f172a 0%, #06327a 50%, #307ef4 100%); padding: 12px 30px; display: flex; justify-content: flex-end; height: 50px; }
+        
+        .wip-card {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 12px;
+            width: 520px;
+            margin: 80px auto;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            text-align: center;
+        }
+        .wip-icon { font-size: 50px; margin-bottom: 15px; }
+        .wip-card h2 { font-size: 24px; color: #0f172a; margin-bottom: 10px; }
+        .wip-card p { font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 25px; }
+        .logout-btn { display: inline-block; padding: 10px 20px; background: #0d6efd; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; }
+        .logout-btn:hover { background: #0b5ed7; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="logo">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbqjxPz93olFsvojgvfLcBrDNplscoMAfo5g&s" alt="VJTI Logo">
+            <div class="text">
+                <h2 style="font-size:16px;">VEERMATA JIJABAI TECHNOLOGICAL INSTITUTE (VJTI)</h2>
+                <span style="font-size:12px; color:#666;">Matunga, Mumbai-19</span>
+            </div>
+        </div>
+        <div class="brand-container">
+            <div class="logo-badge">🎓</div>
+            <div class="brand-text">
+                <h1>VJTI Nexus</h1>
+                <div class="subtitle">Higher & Technical Education Department</div>
+            </div>
+        </div>
+    </div>
+
+    <header></header>
+
+    <div class="wip-card">
+        <div class="wip-icon">🚧</div>
+        <h2>Work in Progress</h2>
+        <p>The student RAG module dashboard is currently under active deployment. Full retrieval services for non-administrator accounts will be enabled shortly.</p>
+        <a href="/logout" class="logout-btn">Log Out</a>
+    </div>
+</body>
+</html>

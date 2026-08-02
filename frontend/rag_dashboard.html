@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTE AI Assistant - Knowledge Retrieval System</title>
+
+    <!-- Include Marked.js for rendering Markdown formatted text -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background: #f4f6f9;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .topbar {
+            padding: 12px 40px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 90px;
+            z-index: 11;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .logo img {
+            height: 60px;
+            width: auto;
+            object-fit: contain;
+        }
+        .text {
+            display: flex;
+            flex-direction: column;
+            color: #444444;
+            line-height: 1.25;
+        }
+        .logo h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #000000;
+            letter-spacing: 0.2px;
+        }
+        .logo .sub-location {
+            font-size: 12px;
+            color: #666666;
+            font-weight: 500;
+        }
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-badge {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .brand-text h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            color: #0f172a;
+        }
+        .brand-text .subtitle {
+            font-size: 0.78rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+        header {
+            background: linear-gradient(135deg, #0f172a 0%, #06327a 50%, #307ef4 100%);
+            color: white;
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            position: relative;
+            z-index: 10;
+            height: 60px;
+        }
+        .nav-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .lang-switch-container {
+            display: flex;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 4px 8px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .lang-btn {
+            background: transparent;
+            color: #cbd5e1;
+            border: none;
+            padding: 6px 18px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .lang-btn.active, .lang-btn:hover {
+            background: #0d6efd;
+            color: white;
+            box-shadow: 0 2px 10px rgba(13, 110, 253, 0.4);
+        }
+        .status-badge {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+            animation: blink 1.5s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        aside {
+            width: 340px;
+            background: white;
+            padding: 20px;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .doc-count {
+            background: #e2e8f0;
+            color: #475569;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .filter-box input {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            outline: none;
+        }
+        #pdfList {
+            list-style: none;
+            overflow-y: auto;
+            flex: 1;
+            margin-bottom: 15px;
+        }
+        .doc-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 10px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+        .doc-item:hover {
+            border-color: #93c5fd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .doc-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .doc-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .doc-meta {
+            font-size: 0.72rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .btn-summarize {
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .btn-summarize:hover {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        .upload-section {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 15px;
+            margin-top: auto;
+        }
+        .upload-section h3 {
+            font-size: 0.9rem;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+        .upload-section input[type="file"] {
+            width: 100%;
+            font-size: 0.85rem;
+            color: #334155;
+            cursor: pointer;
+        }
+        .upload-section input[type="file"]::file-selector-button {
+            background: #0d6efd;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-right: 10px;
+            transition: background 0.2s;
+        }
+        .upload-section input[type="file"]::file-selector-button:hover {
+            background: #0b5ed7;
+        }
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+        }
+        #chatWindow {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            word-wrap: break-word;
+        }
+        /* Style markdown contents inside chat messages */
+        .message ul, .message ol {
+            margin-left: 20px;
+            margin-top: 6px;
+            margin-bottom: 6px;
+        }
+        .message p {
+            margin-bottom: 8px;
+        }
+        .message p:last-child {
+            margin-bottom: 0;
+        }
+        .user {
+            background: #0d6efd;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+        .ai {
+            background: white;
+            color: #212529;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e9ecef;
+        }
+        /* BOTTOM SOURCE FOOTER STYLING */
+        .source-footer {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.8rem;
+            color: #475569;
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        .source-footer strong {
+            color: #0f172a;
+        }
+        .inputArea {
+            display: flex;
+            padding: 15px 25px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+        @property --angle {
+            syntax: '<angle>';
+            initial-value: 0deg;
+            inherits: false;
+        }
+        .input-wrapper {
+            position: relative;
+            flex: 1;
+            border-radius: 8px;
+            padding: 2px;
+            background: conic-gradient(from var(--angle), #0d6efd, #60a5fa, #38bdf8, transparent 40%, #0d6efd);
+            animation: rotateRing 2s linear infinite;
+        }
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            border: transparent;
+            border-radius: 6px;
+            outline: none;
+            background: white;
+            position: relative;
+            z-index: 2;
+        }
+        @keyframes rotateRing {
+            to {
+                --angle: 360deg;
+            }
+        }
+        .inputArea button {
+            margin-left: 12px;
+            padding: 12px 24px;
+            background: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .inputArea button:hover {
+            background: #0b5ed7;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="logo">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbqjxPz93olFsvojgvfLcBrDNplscoMAfo5g&s" alt="VJTI Logo">
+            <div class="text">
+                <h2 data-i18n="vjti_title">VEERMATA JIJABAI TECHNOLOGICAL INSTITUTE (VJTI)</h2>
+                <span class="sub-location" data-i18n="vjti_location">Matunga, Mumbai-19</span>
+            </div>
+        </div>
+
+        <div class="brand-container">
+            <div class="logo-badge">🎓</div>
+            <div class="brand-text">
+                <h1 data-i18n="app_name">VJTI Nexus</h1>
+                <div class="subtitle" data-i18n="department_name">Higher & Technical Education Department</div>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="nav-center">
+            <div class="lang-switch-container">
+                <button class="lang-btn active" id="btn-en" onclick="setLanguage('en')">English</button>
+                <button class="lang-btn" id="btn-mr" onclick="setLanguage('mr')">मराठी</button>
+            </div>
+        </div>
+
+        <div class="status-badge">
+            <div class="status-dot"></div>
+            <span data-i18n="rag_status">RAG Engine Online</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside>
+            <div class="sidebar-header">
+                <h2 data-i18n="docs_header">Documents</h2>
+                <span class="doc-count" id="docCount">0 Files</span>
+            </div>
+
+            <div class="filter-box">
+                <input type="text" id="searchPdf" data-i18n-placeholder="search_placeholder" placeholder="Search for documents..." />
+            </div>
+
+            <ul id="pdfList"></ul>
+
+            <div class="upload-section">
+                <h3 data-i18n="upload_title">Upload PDF</h3>
+                <input type="file" id="pdfUpload" accept=".pdf" multiple />
+            </div>
+        </aside>
+
+        <main>
+            <div id="chatWindow">
+                <div class="message ai">
+                    <strong data-i18n="ai_name">HTE AI Assistant</strong><br>
+                    <span data-i18n="ai_welcome">Hello! I am your HTE administrative assistant. Ask me any question regarding scholarships, admissions, or official regulations.</span>
+                </div>
+            </div>
+
+            <div class="inputArea">
+                <div class="input-wrapper">
+                    <input
+                        type="text"
+                        id="question"
+                        data-i18n-placeholder="input_placeholder"
+                        placeholder="Ask a question..."
+                        autocomplete="off"
+                    >
+                </div>
+                <button id="sendBtn" data-i18n="send_btn">Send</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const uiTranslations = {
+            en: {
+                vjti_title: "VEERMATA JIJABAI TECHNOLOGICAL INSTITUTE (VJTI)",
+                vjti_location: "Matunga, Mumbai-19",
+                app_name: "VJTI Nexus",
+                department_name: "Higher & Technical Education Department",
+                rag_status: "RAG Engine Online",
+                docs_header: "Documents",
+                search_placeholder: "Search for documents...",
+                upload_title: "Upload PDF",
+                ai_name: "HTE AI Assistant",
+                ai_welcome: "Hello! I am your HTE administrative assistant. Ask me any question regarding scholarships, admissions, or official regulations.",
+                input_placeholder: "Ask a question...",
+                send_btn: "Send"
+            },
+            mr: {
+                vjti_title: "वीरमाता जिजाबाई तंत्रज्ञान संस्था (व्ही.जे.टी.आय.)",
+                vjti_location: "माटुंगा, मुंबई-१९",
+                app_name: "व्ही.जे.टी.आय. नेक्सस",
+                department_name: "उच्च व तंत्र शिक्षण विभाग",
+                rag_status: "प्रणाली ऑनलाइन (RAG Engine)",
+                docs_header: "कागदपत्रे ",
+                search_placeholder: "कागदपत्रे शोधा...",
+                upload_title: "PDF अपलोड करा",
+                ai_name: "उच्च व तंत्र शिक्षण AI सहाय्यक",
+                ai_welcome: "नमस्कार! मी आपला उच्च व तंत्र शिक्षण विभाग सहाय्यक आहे. मला शिष्यवृत्ती, प्रवेश प्रक्रिया किंवा अधिकृत नियमांविषयी कोणताही प्रश्न विचारा.",
+                input_placeholder: "प्रश्न विचारा...",
+                send_btn: "पाठवा"
+            }
+        };
+
+        function setLanguage(lang) {
+            if (!uiTranslations[lang]) return;
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (uiTranslations[lang][key]) {
+                    el.textContent = uiTranslations[lang][key];
+                }
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (uiTranslations[lang][key]) {
+                    el.placeholder = uiTranslations[lang][key];
+                }
+            });
+
+            document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+            document.getElementById('btn-mr').classList.toggle('active', lang === 'mr');
+        }
+    </script>
+
+    <script src="script.js"></script>
+</body>
+</html>

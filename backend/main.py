@@ -1,15 +1,16 @@
 """
 main.py
 Main FastAPI application for the HTE AI Assistant.
-Handles API routing, file downloads, feedback logging, and error boundaries.
+Handles API routing, authentication, health checks, file downloads, feedback logging, and error boundaries.
 """
 import os
 import json
 from datetime import datetime
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, status
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from backend.config import DOCS_DIR, HOST, PORT, MAX_FILE_SIZE
 from backend.schemas import (
@@ -28,6 +29,15 @@ from backend.utils import (
 from backend.ingest import ingest_file
 from backend.rag import run_rag_pipeline, generate_document_summary
 
+# Hardcoded Credentials / Rules
+ADMIN_EMAIL = "admin@vjti.ac.in"
+ADMIN_PASSWORD = "adminpassword123"
+
+# Request schema for login
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
 app = FastAPI(
     title="HTE AI Assistant",
     version="1.0.0",
@@ -37,7 +47,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -52,10 +62,59 @@ def home():
     }
 
 
+# Primary health check
 @app.get("/health", response_model=HealthResponse)
 def health_check():
     return {
         "status": "running"
+    }
+
+
+# Frontend status badge endpoint (/api/health)
+@app.get("/api/health")
+def api_health_check():
+    return {
+        "status": "online",
+        "message": "RAG Engine Active"
+    }
+
+
+# Login API Endpoint (/api/login)
+@app.post("/api/login")
+def login_api(data: LoginRequest):
+    email = data.email.strip().lower()
+    password = data.password.strip()
+
+    if not email or not password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email and password are required."
+        )
+
+    # 1. Domain Check: Only @vjti.ac.in emails allowed
+    if not email.endswith("@vjti.ac.in"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized email domain. Please use your @vjti.ac.in address."
+        )
+
+    # 2. Admin Check: Must pass correct ADMIN_PASSWORD
+    if email == ADMIN_EMAIL:
+        if password == ADMIN_PASSWORD:
+            return {
+                "success": True, 
+                "redirect": "/rag_dashboard.html"
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect password for Admin account."
+            )
+
+    # 3. Any other @vjti.ac.in Email -> Direct to Work In Progress
+    return {
+        "success": True, 
+        "redirect": "/work_in_progress.html"
     }
 
 

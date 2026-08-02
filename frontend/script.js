@@ -19,25 +19,67 @@ function updateDocCount() {
 
 updateDocCount();
 
-// Check backend connection health on page load
+// -------------------------------------------------------------
+// BACKEND HEALTH CHECK (UPDATED)
+// -------------------------------------------------------------
 async function checkBackendHealth() {
-    const statusBadge = document.querySelector('.status-badge');
-    
+    const statusBadge = document.querySelector('.status-badge') || document.getElementById('statusBadge');
+    const statusText = document.getElementById('statusText');
+    if (!statusBadge) return;
+
     try {
-        const response = await fetch(`${API_BASE_URL}/health`);
+        // Set a 3-second timeout to fail quickly if backend is unreachable
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+        // Try /api/health first, fallback to /health
+        let response = await fetch(`${API_BASE_URL}/api/health`, {
+            method: 'GET',
+            signal: controller.signal
+        }).catch(() => null);
+
+        if (!response || !response.ok) {
+            response = await fetch(`${API_BASE_URL}/health`, {
+                method: 'GET',
+                signal: controller.signal
+            });
+        }
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            throw new Error(`Server returned status code ${response.status}`);
+        }
+
         const data = await response.json();
 
-        if (statusBadge && data.status === "running") {
-            statusBadge.innerHTML = `<div class="status-dot"></div> RAG Engine Online`;
-            statusBadge.style.borderColor = "rgba(16, 185, 129, 0.3)";
-            statusBadge.style.color = "#34d399";
+        // Check if API status is running or online
+        if (data && (data.status === "running" || data.status === "online" || data.status === "ok")) {
+            if (statusText) {
+                statusBadge.className = "status-badge online";
+                statusText.innerText = "RAG Engine Online";
+            } else {
+                statusBadge.innerHTML = `<div class="status-dot"></div> RAG Engine Online`;
+                statusBadge.style.borderColor = "rgba(16, 185, 129, 0.3)";
+                statusBadge.style.color = "#34d399";
+                statusBadge.style.background = "rgba(16, 185, 129, 0.1)";
+            }
+        } else {
+            throw new Error("Backend reported abnormal status");
         }
+
     } catch (error) {
-        console.error("Backend health check failed:", error);
-        if (statusBadge) {
-            statusBadge.innerHTML = `<div class="status-dot" style="background-color: #ef4444; box-shadow: 0 0 8px #ef4444;"></div> Backend Offline`;
+        console.warn("Backend connection offline:", error.message || error);
+        
+        // Render Offline State
+        if (statusText) {
+            statusBadge.className = "status-badge offline";
+            statusText.innerText = "RAG Engine Offline";
+        } else {
+            statusBadge.innerHTML = `<div class="status-dot" style="background-color: #ef4444; box-shadow: 0 0 8px #ef4444; animation: none;"></div> RAG Engine Offline`;
             statusBadge.style.borderColor = "rgba(239, 68, 68, 0.3)";
             statusBadge.style.color = "#f87171";
+            statusBadge.style.background = "rgba(239, 68, 68, 0.1)";
         }
     }
 }
@@ -91,6 +133,9 @@ async function fetchExistingDocuments() {
 document.addEventListener("DOMContentLoaded", () => {
     checkBackendHealth();
     fetchExistingDocuments();
+
+    // Re-check backend status automatically every 10 seconds
+    setInterval(checkBackendHealth, 10000);
 });
 
 function escapeHTML(str) {

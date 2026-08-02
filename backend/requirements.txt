@@ -2,12 +2,12 @@ fastapi
 uvicorn
 python-dotenv
 python-multipart
-
+flask-cors
 PyMuPDF
 pytesseract
 pillow
 google-genai
-
+flask
 chromadb
 
 sentence-transformers
