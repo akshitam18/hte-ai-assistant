@@ -4,7 +4,8 @@ python-dotenv
 python-multipart
 
 PyMuPDF
-
+pytesseract
+pillow
 google-genai
 
 chromadb
@@ -13,4 +14,3 @@ sentence-transformers
 
 pydantic
 
-python-multipart
