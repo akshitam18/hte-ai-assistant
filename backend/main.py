@@ -44,6 +44,7 @@ app.add_middleware(
 
 FEEDBACK_LOG = "user_feedback.json"
 
+
 @app.get("/")
 def home():
     return {
@@ -57,8 +58,28 @@ def health_check():
         "status": "running"
     }
 
+
+# =========================================================
+# GET /documents: FIXES THE FRONTEND 404 & EMPTY FILE LIST
+# =========================================================
+@app.get("/documents")
+def list_documents():
+    """
+    Returns a list of all indexed PDF documents in DOCS_DIR.
+    """
+    if not os.path.exists(DOCS_DIR):
+        return []
+
+    files = [
+        f for f in os.listdir(DOCS_DIR)
+        if f.lower().endswith(".pdf")
+    ]
+
+    return [{"name": f} for f in files]
+
+
 @app.post("/upload", response_model=UploadResponse)
-def upload_pdf(file: UploadFile = File(...)):
+async def upload_pdf(file: UploadFile = File(...)):
 
     if file.filename is None:
         raise HTTPException(
@@ -72,6 +93,7 @@ def upload_pdf(file: UploadFile = File(...)):
             detail="Only PDF files are allowed."
         )
 
+    # Check file size safely
     file.file.seek(0, 2)
     file_size = file.file.tell()
     file.file.seek(0)
@@ -79,12 +101,14 @@ def upload_pdf(file: UploadFile = File(...)):
     if file_size > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=400,
-            detail="File size exceeds the 20 MB limit."
+            detail="File size exceeds the limit."
         )
 
-    filename = save_uploaded_file(file)
+    # Save file asynchronously
+    filename = await save_uploaded_file(file)
 
-    ingest_file() 
+    # Trigger chunking and ChromaDB vector insertion
+    ingest_file()
 
     return {
         "message": "Upload successful",
@@ -95,19 +119,19 @@ def upload_pdf(file: UploadFile = File(...)):
 @app.post("/ask", response_model=AskResponse)
 def ask_question(request: AskRequest):
     result = run_rag_pipeline(request.question)
-    
+
     if isinstance(result, dict):
-        # Convert float to str, or set default string if missing
         if "relevance_score" in result:
             result["relevance_score"] = str(result["relevance_score"])
         else:
             result["relevance_score"] = "0.0"
-            
+
     return result
+
 
 @app.get("/docs/{filename}")
 def download_document(filename: str):
-    
+
     target_path = os.path.join(DOCS_DIR, filename)
     if not os.path.exists(target_path):
         raise HTTPException(
@@ -119,6 +143,7 @@ def download_document(filename: str):
         media_type="application/pdf",
         filename=filename
     )
+
 
 @app.post("/feedback")
 def record_feedback(entry: FeedbackRequest):
@@ -144,17 +169,18 @@ def record_feedback(entry: FeedbackRequest):
 
     return {"status": "Feedback logged successfully."}
 
+
 @app.get("/summarize/{filename}", response_model=SummaryResponse)
 def summarize_document(filename: str):
-    
+
     summary_text = generate_document_summary(filename)
     return {
         "filename": filename,
         "summary": summary_text
     }
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(

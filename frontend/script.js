@@ -22,31 +22,90 @@ updateDocCount();
 // Check backend connection health on page load
 async function checkBackendHealth() {
     const statusBadge = document.querySelector('.status-badge');
-    if (!statusBadge) return;
-
+    
     try {
         const response = await fetch(`${API_BASE_URL}/health`);
         const data = await response.json();
 
-        if (data.status === "running") {
+        if (statusBadge && data.status === "running") {
             statusBadge.innerHTML = `<div class="status-dot"></div> RAG Engine Online`;
             statusBadge.style.borderColor = "rgba(16, 185, 129, 0.3)";
             statusBadge.style.color = "#34d399";
         }
     } catch (error) {
         console.error("Backend health check failed:", error);
-        statusBadge.innerHTML = `<div class="status-dot" style="background-color: #ef4444; box-shadow: 0 0 8px #ef4444;"></div> Backend Offline`;
-        statusBadge.style.borderColor = "rgba(239, 68, 68, 0.3)";
-        statusBadge.style.color = "#f87171";
+        if (statusBadge) {
+            statusBadge.innerHTML = `<div class="status-dot" style="background-color: #ef4444; box-shadow: 0 0 8px #ef4444;"></div> Backend Offline`;
+            statusBadge.style.borderColor = "rgba(239, 68, 68, 0.3)";
+            statusBadge.style.color = "#f87171";
+        }
     }
 }
 
-document.addEventListener("DOMContentLoaded", checkBackendHealth);
+// -------------------------------------------------------------
+// FETCH EXISTING DOCUMENTS FROM BACKEND (/documents)
+// -------------------------------------------------------------
+async function fetchExistingDocuments() {
+    if (!pdfList) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/documents`);
+        if (!response.ok) throw new Error("Failed to fetch documents");
+
+        const data = await response.json();
+        pdfList.innerHTML = ''; // Clear temporary list
+
+        const fileList = Array.isArray(data) ? data : (data.documents || []);
+
+        fileList.forEach(fileObj => {
+            const fileName = typeof fileObj === 'string' ? fileObj : (fileObj.name || fileObj.filename);
+            if (!fileName) return;
+
+            const li = document.createElement('li');
+            li.className = 'doc-item';
+            li.innerHTML = `
+                <div class="doc-info">
+                    <span class="doc-name" title="${escapeHTML(fileName)}">📄 ${escapeHTML(fileName)}</span>
+                    <span class="doc-meta">Indexed</span>
+                </div>
+                <button class="btn-summarize" title="Summarize document">Summarize</button>
+            `;
+
+            // Attach summarize handler
+            const summarizeBtn = li.querySelector('.btn-summarize');
+            if (summarizeBtn) {
+                summarizeBtn.addEventListener('click', () => summarizeDocument(fileName));
+            }
+
+            pdfList.appendChild(li);
+        });
+
+        updateDocCount();
+
+    } catch (error) {
+        console.error("Error loading existing documents:", error);
+    }
+}
+
+// Run health check and fetch existing documents on page load
+document.addEventListener("DOMContentLoaded", () => {
+    checkBackendHealth();
+    fetchExistingDocuments();
+});
 
 function escapeHTML(str) {
     return String(str).replace(/[&<>'"]/g,
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
     );
+}
+
+// Helper to safely render Markdown content with fallbacks
+function renderMarkdown(text) {
+    if (typeof marked !== 'undefined' && marked.parse) {
+        return marked.parse(text);
+    }
+    // Fallback if marked library fails to load
+    return escapeHTML(text).replace(/\n/g, '<br>');
 }
 
 // Send Question to FastAPI Backend (/ask)
@@ -91,20 +150,31 @@ async function sendMessage() {
         const data = await response.json();
 
         // Remove Loading Placeholder
-        chatWindow.removeChild(loadingDiv);
+        if (chatWindow.contains(loadingDiv)) {
+            chatWindow.removeChild(loadingDiv);
+        }
 
         // Append AI Response
         const aiDiv = document.createElement('div');
         aiDiv.className = 'message ai';
 
+        // Parse main markdown body
+        let contentHTML = renderMarkdown(data.answer || "No response generated.");
+
+        // Build source citation footer at the bottom if sources exist
         let citationHTML = "";
         if (data.source && data.source !== "None") {
-            citationHTML = `<span class="citation">📌 Source: ${escapeHTML(data.source)} (Page ${data.page})</span>`;
+            const pageInfo = data.page ? ` (Page ${data.page})` : '';
+            citationHTML = `
+                <div class="source-footer" style="margin-top:12px; padding-top:8px; border-top:1px solid #e2e8f0; font-size:0.8rem; color:#64748b;">
+                    📌 <strong>Source Document:</strong> ${escapeHTML(data.source)}${pageInfo}
+                </div>
+            `;
         }
 
         aiDiv.innerHTML = `
-            <strong>HTE AI Assistant</strong><br>
-            ${escapeHTML(data.answer)}
+            <strong style="color: #0f172a;">HTE AI Assistant</strong><br><br>
+            ${contentHTML}
             ${citationHTML}
         `;
         chatWindow.appendChild(aiDiv);
@@ -161,17 +231,27 @@ async function summarizeDocument(filename) {
         }
 
         const data = await response.json();
-        chatWindow.removeChild(loadingDiv);
+        
+        if (chatWindow.contains(loadingDiv)) {
+            chatWindow.removeChild(loadingDiv);
+        }
 
         const aiDiv = document.createElement('div');
         aiDiv.className = 'message ai';
         
-        const formattedSummary = escapeHTML(data.summary || data.answer || "No summary returned.").replace(/\n/g, '<br>');
+        // Parse summary with Markdown renderer
+        const rawText = data.summary || data.answer || "No summary returned.";
+        const formattedSummaryHTML = renderMarkdown(rawText);
+
+        // Page info footer at bottom if supplied by API
+        const pageInfo = data.page ? ` (Page ${data.page})` : '';
 
         aiDiv.innerHTML = `
-            <strong>HTE AI Assistant - Executive Summary</strong><br>
-            <span style="font-size: 0.82rem; color: #64748b; margin-bottom: 8px; display: inline-block;">Document: <strong>${escapeHTML(filename)}</strong></span><br>
-            ${formattedSummary}
+            <strong style="color: #0f172a;">Executive Summary</strong><br><br>
+            ${formattedSummaryHTML}
+            <div class="source-footer" style="margin-top:12px; padding-top:8px; border-top:1px solid #e2e8f0; font-size:0.8rem; color:#64748b;">
+                📄 <strong>Source Document:</strong> ${escapeHTML(filename)}${pageInfo}
+            </div>
         `;
         chatWindow.appendChild(aiDiv);
 
@@ -230,22 +310,8 @@ if (pdfUpload) {
                         throw new Error(errData.detail || "Upload failed.");
                     }
 
-                    const data = await response.json();
-                    const uploadedFileName = data.filename || file.name;
-
-                    // Update sidebar item upon successful upload
-                    tempLi.style.opacity = '1';
-                    tempLi.innerHTML = `
-                        <div class="doc-info">
-                            <span class="doc-name" title="${escapeHTML(uploadedFileName)}">📄 ${escapeHTML(uploadedFileName)}</span>
-                            <span class="doc-meta">${(file.size / 1024).toFixed(1)} KB</span>
-                        </div>
-                        <button class="btn-summarize" title="Summarize document">📄 Summarize</button>
-                    `;
-
-                    // Attach summarize handler
-                    const summarizeBtn = tempLi.querySelector('.btn-summarize');
-                    summarizeBtn.addEventListener('click', () => summarizeDocument(uploadedFileName));
+                    // Refresh document list completely after upload completes
+                    await fetchExistingDocuments();
 
                 } catch (error) {
                     console.error("Upload error:", error);
@@ -273,7 +339,6 @@ if (pdfUpload) {
             }
         }
 
-        updateDocCount();
         pdfUpload.value = '';
     });
 }

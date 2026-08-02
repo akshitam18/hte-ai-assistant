@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HTE AI Assistant - Knowledge Retrieval System</title>
 
+    <!-- Include Marked.js for rendering Markdown formatted text -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -18,25 +21,23 @@
             display: flex;
             flex-direction: column;
         }
-        /* INCREASED TOP BAR HEIGHT & ADJUSTED SPACING */
         .topbar {
             padding: 12px 40px;
             background: white;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
             display: flex;
-            justify-content: space-between; /* Spreads VJTI left and HTE right */
+            justify-content: space-between;
             align-items: center;
-            height: 90px; /* Increased height */
+            height: 90px;
             z-index: 11;
         }
-        /* VJTI LOGO & TEXT (EXTREME LEFT - ADJUSTED SIZES) */
         .logo {
             display: flex;
             align-items: center;
             gap: 14px;
         }
         .logo img {
-            height: 60px; /* Scaled up logo */
+            height: 60px;
             width: auto;
             object-fit: contain;
         }
@@ -47,7 +48,7 @@
             line-height: 1.25;
         }
         .logo h2 {
-            font-size: 16px; /* Scaled up heading */
+            font-size: 16px;
             font-weight: 700;
             color: #000000;
             letter-spacing: 0.2px;
@@ -57,7 +58,6 @@
             color: #666666;
             font-weight: 500;
         }
-        /* HTE BRANDING (EXTREME RIGHT - ADJUSTED SIZES) */
         .brand-container {
             display: flex;
             align-items: center;
@@ -74,7 +74,7 @@
             justify-content: center;
         }
         .brand-text h1 {
-            font-size: 1.15rem; /* Scaled up title */
+            font-size: 1.15rem;
             font-weight: 700;
             letter-spacing: 0.3px;
             color: #0f172a;
@@ -84,7 +84,6 @@
             color: #64748b;
             font-weight: 500;
         }
-        /* SECONDARY NAV BAR */
         header {
             background: linear-gradient(135deg, #0f172a 0%, #06327a 50%, #307ef4 100%);
             color: white;
@@ -97,7 +96,6 @@
             z-index: 10;
             height: 60px;
         }
-        /* CENTERED NAV TABS / LANGUAGE SWITCHER */
         .nav-center {
             position: absolute;
             left: 50%;
@@ -229,16 +227,6 @@
             color: #64748b;
             margin-top: 2px;
         }
-        .badge {
-            font-size: 0.65rem;
-            padding: 1px 5px;
-            border-radius: 4px;
-            font-weight: 700;
-            color: white;
-        }
-        .badge.gr { background-color: #2563eb; }
-        
-        /* SUMMARIZE BUTTON STYLING */
         .btn-summarize {
             background: #eff6ff;
             color: #2563eb;
@@ -256,7 +244,6 @@
             color: white;
             border-color: #2563eb;
         }
-
         .upload-section {
             border-top: 1px solid #e2e8f0;
             padding-top: 15px;
@@ -302,12 +289,24 @@
             gap: 15px;
         }
         .message {
-            max-width: 75%;
+            max-width: 80%;
             padding: 14px 18px;
             border-radius: 12px;
             line-height: 1.5;
             font-size: 0.95rem;
             word-wrap: break-word;
+        }
+        /* Style markdown contents inside chat messages */
+        .message ul, .message ol {
+            margin-left: 20px;
+            margin-top: 6px;
+            margin-bottom: 6px;
+        }
+        .message p {
+            margin-bottom: 8px;
+        }
+        .message p:last-child {
+            margin-bottom: 0;
         }
         .user {
             background: #0d6efd;
@@ -323,14 +322,19 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
             border: 1px solid #e9ecef;
         }
-        .citation {
-            display: block;
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 1px solid #eaeaea;
+        /* BOTTOM SOURCE FOOTER STYLING */
+        .source-footer {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
             font-size: 0.8rem;
-            color: #0d6efd;
-            font-weight: 600;
+            color: #475569;
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        .source-footer strong {
+            color: #0f172a;
         }
         .inputArea {
             display: flex;
@@ -343,7 +347,6 @@
             initial-value: 0deg;
             inherits: false;
         }
-        /* CONTINUOUS GLOWING BLUE BORDER ON INPUT WRAPPER */
         .input-wrapper {
             position: relative;
             flex: 1;
@@ -385,9 +388,7 @@
     </style>
 </head>
 <body>
-    <!-- EXPANDED TOP BAR WITH PROPORTIONAL LOGO & BRANDING SIZES -->
     <div class="topbar">
-        <!-- VJTI LOGO & TEXT (LEFT) -->
         <div class="logo">
             <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbqjxPz93olFsvojgvfLcBrDNplscoMAfo5g&s" alt="VJTI Logo">
             <div class="text">
@@ -396,7 +397,6 @@
             </div>
         </div>
 
-        <!-- HTE BRANDING (RIGHT) -->
         <div class="brand-container">
             <div class="logo-badge">🎓</div>
             <div class="brand-text">
@@ -406,7 +406,6 @@
         </div>
     </div>
 
-    <!-- SECONDARY NAV BAR WITH LANGUAGE SWITCHER -->
     <header>
         <div class="nav-center">
             <div class="lang-switch-container">
@@ -463,7 +462,6 @@
         </main>
     </div>
 
-    <!-- LANGUAGE TRANSLATION SCRIPT -->
     <script>
         const uiTranslations = {
             en: {
@@ -499,7 +497,6 @@
         function setLanguage(lang) {
             if (!uiTranslations[lang]) return;
 
-            // 1. Update text tags
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (uiTranslations[lang][key]) {
@@ -507,7 +504,6 @@
                 }
             });
 
-            // 2. Update placeholder tags
             document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (uiTranslations[lang][key]) {
@@ -515,13 +511,11 @@
                 }
             });
 
-            // 3. Update button active style state
             document.getElementById('btn-en').classList.toggle('active', lang === 'en');
             document.getElementById('btn-mr').classList.toggle('active', lang === 'mr');
         }
     </script>
 
-    <!-- External Script JS -->
     <script src="script.js"></script>
 </body>
 </html>
