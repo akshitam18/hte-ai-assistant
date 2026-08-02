@@ -1,29 +1,30 @@
 import fitz  # PyMuPDF
+import pytesseract
+from PIL import Image
+import io
 
 def load_pdf(pdf_path: str):
-    """
-    Extracts text page-by-page from a given PDF file.
-    Retains page numbers for source reference and handles Devanagari (Marathi) text properly.
-    """
     pages_data = []
 
     try:
-        # Open the PDF file
         doc = fitz.open(pdf_path)
 
         for page_index in range(len(doc)):
             page = doc.load_page(page_index)
             page_num = page_index + 1
 
-            # Use TEXT_PRESERVE_LIGATURES flag to prevent Devanagari combined characters from breaking
+            # 1. Try standard text extraction
             raw_text = page.get_text("text", flags=fitz.TEXT_PRESERVE_LIGATURES)
+            text = raw_text.strip() if isinstance(raw_text, str) else ""
 
-            if not isinstance(raw_text, str):
-                continue
+            # 2. OCR Fallback for scanned Marathi text
+            if not text:
+                pix = page.get_pixmap(dpi=300)
+                img = Image.open(io.BytesIO(pix.tobytes("png")))
+                # Requires tesseract-ocr-mar installed on system
+                text = pytesseract.image_to_string(img, lang="mar+hin+eng").strip()
 
-            text = raw_text.strip()
-
-            # Only append pages that contain actual text
+            # Only append if text was successfully found or extracted via OCR
             if text:
                 pages_data.append({
                     "page": page_num,
